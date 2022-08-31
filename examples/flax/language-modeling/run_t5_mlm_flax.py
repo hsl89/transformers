@@ -447,17 +447,31 @@ class FlaxDataCollatorForT5MLM:
             return segment_length
 
         noise_span_lengths = _random_segmentation(num_noise_tokens, num_noise_spans)
+        print("noise_span_lengths: ", noise_span_lengths)
+       
         nonnoise_span_lengths = _random_segmentation(num_nonnoise_tokens, num_noise_spans)
+        print("nonnoise span length: ", nonnoise_span_lengths)
 
         interleaved_span_lengths = np.reshape(
             np.stack([nonnoise_span_lengths, noise_span_lengths], axis=1), [num_noise_spans * 2]
         )
-        span_starts = np.cumsum(interleaved_span_lengths)[:-1]
-        span_start_indicator = np.zeros((length,), dtype=np.int8)
-        span_start_indicator[span_starts] = True
-        span_num = np.cumsum(span_start_indicator)
-        is_noise = np.equal(span_num % 2, 1)
+        print("interleved_span_lengths: ", interleaved_span_lengths)
 
+        # starting index of noise-span and non-noise span
+        span_starts = np.cumsum(interleaved_span_lengths)[:-1]
+        print("span_starts", span_starts)
+
+        span_start_indicator = np.zeros((length,), dtype=np.int8)
+        
+        # 1 indicates starts of a span (noise and non-noise)
+        span_start_indicator[span_starts] = True
+        print("span_start_indicator: ", span_start_indicator)
+        span_num = np.cumsum(span_start_indicator)
+        
+        print("span_num: ", span_num)
+        # noise followed by non-noise
+        is_noise = np.equal(span_num % 2, 1)
+        print("is_noise, ", is_noise)
         return is_noise[:orig_length]
 
 
